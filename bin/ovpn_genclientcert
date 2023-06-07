@@ -10,9 +10,8 @@ fi
 
 CLIENTNAME=$1
 PASSWORD=$2
-
+NUM_USER=$3
 set -e
-
 source "$OPENVPN/ovpn_env.sh"
 
 # Download EasyRSA because Ubuntu doesn't have it as a CLI command
@@ -21,9 +20,9 @@ tar xvf EasyRSA-unix-v3.0.6.tgz
 
 export EASYRSA="EasyRSA-v3.0.6/"
 export EASYRSA_SSL_CONF="EasyRSA-v3.0.6/openssl-easyrsa.cnf"
-
-EasyRSA-v3.0.6/easyrsa build-client-full $CLIENTNAME $PASSWORD
-
+for i in $(seq 1 $NUM_USER); do
+    EasyRSA-v3.0.6/easyrsa build-client-full ${CLIENTNAME}$i $PASSWORD
+done
 # Remove EasyRSA files when we're done
 rm -r EasyRSA-v3.0.6/
 rm EasyRSA-unix-v3.0.6.tgz
