@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+if [ "$DEBUG" == "1" ]; then
+    set -x
+fi
+
+set -e
+mkdir -p /exports
+
+if [ -n $1 ]; then
+	for i in $(seq 1 $1); do
+		echo "Generating config for user $i"
+		ovpn_getclient user${i} > /exports/user${i}.ovpn
+	done
+fi
