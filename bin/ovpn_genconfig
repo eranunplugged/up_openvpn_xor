@@ -347,7 +347,13 @@ else
 fi
 
 [ -n "$OVPN_TLS_CIPHER" ] && echo "tls-cipher $OVPN_TLS_CIPHER" >> "$conf"
-[ -n "$OVPN_CIPHER" ] && echo "cipher $OVPN_CIPHER" >> "$conf"
+# OpenVPN 2.6: prefer negotiable `data-ciphers`; keep `cipher` as fallback for
+# pre-2.4 clients (UNP-8203).
+if [ -n "$OVPN_CIPHER" ]; then
+  echo "data-ciphers $OVPN_CIPHER" >> "$conf"
+  echo "data-ciphers-fallback $OVPN_CIPHER" >> "$conf"
+  echo "cipher $OVPN_CIPHER" >> "$conf"
+fi
 [ -n "$OVPN_AUTH" ] && echo "auth $OVPN_AUTH" >> "$conf"
 
 [ -n "${OVPN_CLIENT_TO_CLIENT:-}" ] && echo "client-to-client" >> "$conf"

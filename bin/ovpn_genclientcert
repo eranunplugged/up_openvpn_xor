@@ -1,28 +1,32 @@
 #!/bin/bash
 
 #
-# Generate a client certificate with EasyRSA
+# Generate one or more client certificates with EasyRSA
+#
+# Usage: ovpn_genclientcert <clientname> <password|nopass> <count>
+# Builds <clientname>1 .. <clientname><count>.
 #
 
-if [ "$DEBUG" == "1" ]; then
+if [ "${DEBUG:-0}" == "1" ]; then
   set -x
 fi
 
-CLIENTNAME=$1
-PASSWORD=$2
-NUM_USER=$3
-set -e
+set -euo pipefail
+
+CLIENTNAME="${1:?usage: ovpn_genclientcert <clientname> <password|nopass> <count>}"
+PASSWORD="${2:?password (or 'nopass') required}"
+NUM_USER="${3:?client count required}"
+case "$NUM_USER" in (*[!0-9]*|'') echo "count must be a positive integer" >&2; exit 1;; esac
+
 source "$OPENVPN/ovpn_env.sh"
 
-# Download EasyRSA because Ubuntu doesn't have it as a CLI command
-wget https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.6/EasyRSA-unix-v3.0.6.tgz
-tar xvf EasyRSA-unix-v3.0.6.tgz
+# EasyRSA is baked into the image (UNP-8203) — no runtime download.
+EASYRSA_DIR="${EASYRSA_DIR:-/opt/easyrsa}"
+export EASYRSA="$EASYRSA_DIR"
+export EASYRSA_SSL_CONF="$EASYRSA_DIR/openssl-easyrsa.cnf"
+# Only honor EASYRSA_VARS_FILE if it exists (EasyRSA 3.2 errors otherwise)
+[ -n "${EASYRSA_VARS_FILE:-}" ] && [ ! -f "$EASYRSA_VARS_FILE" ] && unset EASYRSA_VARS_FILE
 
-export EASYRSA="EasyRSA-v3.0.6/"
-export EASYRSA_SSL_CONF="EasyRSA-v3.0.6/openssl-easyrsa.cnf"
-for i in $(seq 1 $NUM_USER); do
-    EasyRSA-v3.0.6/easyrsa build-client-full ${CLIENTNAME}$i $PASSWORD
+for i in $(seq 1 "$NUM_USER"); do
+    "$EASYRSA_DIR/easyrsa" build-client-full "${CLIENTNAME}${i}" "$PASSWORD"
 done
-# Remove EasyRSA files when we're done
-rm -r EasyRSA-v3.0.6/
-rm EasyRSA-unix-v3.0.6.tgz

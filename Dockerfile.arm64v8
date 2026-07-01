@@ -1,11 +1,15 @@
 # Original credit: https://github.com/jpetazzo/dockvpn
 
 # Smallest base image
-FROM arm64v8/ubuntu:18.04
+FROM arm64v8/ubuntu:24.04
 
 LABEL maintainer="lawtancool"
 
 COPY qemu-aarch64-static /usr/bin
+
+ARG OPENVPN_VERSION=2.6.14
+ARG TUNNELBLICK_VERSION=8.0.2
+ARG EASYRSA_VERSION=3.2.6
 
 # Testing: pamtester
 #RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories && \
@@ -13,23 +17,23 @@ COPY qemu-aarch64-static /usr/bin
 #    ln -s /usr/share/easy-rsa/easyrsa /usr/local/bin && \
 #    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
 
-RUN apt-get update && apt-get install -y wget tar unzip build-essential libssl-dev iproute2 liblz4-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev libsystemd-dev easy-rsa iptables pkg-config && \
-    wget https://swupdate.openvpn.org/community/releases/openvpn-2.5.3.tar.gz && tar xvf openvpn-2.5.3.tar.gz && \
-    wget https://github.com/Tunnelblick/Tunnelblick/archive/refs/tags/v3.8.6beta05.zip && unzip v3.8.6beta05.zip && \
-    cp Tunnelblick-3.8.6beta05/third_party/sources/openvpn/openvpn-2.5.3/patches/*.diff openvpn-2.5.3 && \
-    cd openvpn-2.5.3 && \
-    patch -p1 < 02-tunnelblick-openvpn_xorpatch-a.diff && \
-    patch -p1 < 03-tunnelblick-openvpn_xorpatch-b.diff && \
-    patch -p1 < 04-tunnelblick-openvpn_xorpatch-c.diff && \
-    patch -p1 < 05-tunnelblick-openvpn_xorpatch-d.diff && \
-    patch -p1 < 06-tunnelblick-openvpn_xorpatch-e.diff && \
-    ./configure --disable-systemd --enable-async-push --enable-iproute2 && \
+RUN apt-get update && apt-get install -y ca-certificates wget tar unzip build-essential libssl-dev iproute2 liblz4-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev libcap-ng-dev iptables pkg-config && \
+    wget -q "https://swupdate.openvpn.org/community/releases/openvpn-${OPENVPN_VERSION}.tar.gz" && tar xf "openvpn-${OPENVPN_VERSION}.tar.gz" && \
+    wget -q "https://github.com/Tunnelblick/Tunnelblick/archive/refs/tags/v${TUNNELBLICK_VERSION}.zip" && unzip -q "v${TUNNELBLICK_VERSION}.zip" && \
+    cp "Tunnelblick-${TUNNELBLICK_VERSION}/third_party/sources/openvpn/openvpn-${OPENVPN_VERSION}/patches/"*xorpatch*.diff "openvpn-${OPENVPN_VERSION}/" && \
+    cd "openvpn-${OPENVPN_VERSION}" && \
+    for f in *-tunnelblick-openvpn_xorpatch-*.diff; do patch -p1 < "$f"; done && \
+    ./configure --disable-systemd --disable-dco --enable-async-push && \
     make && make install && \
-    cd .. && rm -r openvpn-2.5.3 && rm -r Tunnelblick-3.8.6beta05
+    cd .. && rm -rf "openvpn-${OPENVPN_VERSION}"* "Tunnelblick-${TUNNELBLICK_VERSION}" "v${TUNNELBLICK_VERSION}.zip" && \
+    wget -q "https://github.com/OpenVPN/easy-rsa/releases/download/v${EASYRSA_VERSION}/EasyRSA-${EASYRSA_VERSION}.tgz" && \
+    tar xf "EasyRSA-${EASYRSA_VERSION}.tgz" && mv "EasyRSA-${EASYRSA_VERSION}" /opt/easyrsa && rm "EasyRSA-${EASYRSA_VERSION}.tgz" && \
+    rm -rf /var/lib/apt/lists/*
 
 # Needed by scripts
 ENV OPENVPN /etc/openvpn
-ENV EASYRSA /usr/share/easy-rsa
+ENV EASYRSA_DIR /opt/easyrsa
+ENV EASYRSA /opt/easyrsa
 ENV EASYRSA_PKI $OPENVPN/pki
 ENV EASYRSA_VARS_FILE $OPENVPN/vars
 

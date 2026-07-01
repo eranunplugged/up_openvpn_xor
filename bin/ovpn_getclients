@@ -1,15 +1,23 @@
 #!/bin/bash
 #
-if [ "$DEBUG" == "1" ]; then
+# Export N client configs (user1..userN) to /exports.
+# Usage: ovpn_getclients <N>
+#
+if [ "${DEBUG:-0}" == "1" ]; then
     set -x
 fi
 
-set -e
+set -euo pipefail
+
+N="${1:-}"
+# NOTE: the previous `[ -n $1 ]` was unquoted, so it was always true (and ran
+# `seq 1 ""` with no arg). Validate explicitly. (UNP-8203)
+[ -n "$N" ] || { echo "usage: ovpn_getclients <N>" >&2; exit 1; }
+case "$N" in (*[!0-9]*|'') echo "N must be a positive integer" >&2; exit 1;; esac
+
 mkdir -p /exports
 
-if [ -n $1 ]; then
-	for i in $(seq 1 $1); do
-		echo "Generating config for user $i"
-		ovpn_getclient user${i} > /exports/user${i}.ovpn
-	done
-fi
+for i in $(seq 1 "$N"); do
+    echo "Generating config for user $i"
+    ovpn_getclient "user${i}" > "/exports/user${i}.ovpn"
+done

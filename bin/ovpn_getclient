@@ -86,6 +86,8 @@ tls-crypt ta.key
     fi
 
     if [ -n "$OVPN_CIPHER" ]; then
+        # OpenVPN 2.6: negotiable data-ciphers + cipher fallback (UNP-8203)
+        echo "data-ciphers $OVPN_CIPHER"
         echo "cipher $OVPN_CIPHER"
     fi
 
