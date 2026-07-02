@@ -13,7 +13,7 @@ ARG TUNNELBLICK_VERSION=8.0.2
 ARG EASYRSA_VERSION=3.2.6
 
 RUN apt-get update && apt-get install -y ca-certificates wget tar unzip build-essential libssl-dev iproute2 liblz4-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev libcap-ng-dev iptables pkg-config && \
-    wget -q "https://swupdate.openvpn.org/community/releases/openvpn-${OPENVPN_VERSION}.tar.gz" && tar xf "openvpn-${OPENVPN_VERSION}.tar.gz" && \
+    wget -q "https://github.com/OpenVPN/openvpn/releases/download/v${OPENVPN_VERSION}/openvpn-${OPENVPN_VERSION}.tar.gz" && tar xf "openvpn-${OPENVPN_VERSION}.tar.gz" && \
     wget -q "https://github.com/Tunnelblick/Tunnelblick/archive/refs/tags/v${TUNNELBLICK_VERSION}.zip" && unzip -q "v${TUNNELBLICK_VERSION}.zip" && \
     cp "Tunnelblick-${TUNNELBLICK_VERSION}/third_party/sources/openvpn/openvpn-${OPENVPN_VERSION}/patches/"*xorpatch*.diff "openvpn-${OPENVPN_VERSION}/" && \
     cd "openvpn-${OPENVPN_VERSION}" && \
