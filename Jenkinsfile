@@ -13,6 +13,10 @@ pipeline {
   options {
     buildDiscarder(logRotator(numToKeepStr: '20', daysToKeepStr: '60'))
     timestamps()
+    // Serialize builds: concurrent runs share the amd64-<date> tag and the
+    // post-cleanup `docker image rm` of one can delete the image another is
+    // pushing (observed as "No such image" during push). (UNP-8203)
+    disableConcurrentBuilds()
   }
 
   parameters {
