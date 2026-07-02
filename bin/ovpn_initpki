@@ -19,6 +19,10 @@ nopass="${1:-}"
 EASYRSA_DIR="${EASYRSA_DIR:-/opt/easyrsa}"
 export EASYRSA="$EASYRSA_DIR"
 export EASYRSA_SSL_CONF="$EASYRSA_DIR/openssl-easyrsa.cnf"
+# EasyRSA 3.2 prompts on build-ca/build-server-full unless batch mode is set.
+# init-vpn.sh passes EASYRSA_BATCH for this step, but set it here too so the
+# script is non-interactive regardless of caller. (UNP-8203)
+export EASYRSA_BATCH=1
 # EASYRSA_VARS_FILE is an optional drop-in (persisted in the /etc/openvpn volume).
 # EasyRSA 3.2 hard-errors if it's set but missing, so only honor it when present.
 [ -n "${EASYRSA_VARS_FILE:-}" ] && [ ! -f "$EASYRSA_VARS_FILE" ] && unset EASYRSA_VARS_FILE
